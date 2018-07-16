@@ -61,18 +61,23 @@ class LProbRegressor(object):
         self.slr_mean.fit(X, y, esd_alpha=None)
         self.slr_std.fit(X, np.abs(y-self.slr_std.predict(X)), esd_alpha=None)
 
-        # Fit the mean and standard deviation using a MCMC method
-        with self.pymc3model:
-            U = np.concatenate([X, np.ones((X.shape[0],1))], axis=1)
-            locPriors = pm.Uniform("loc", lower=self.locFitter.coeffs - 5, upper=self.locFitter.coeffs + 5, shape=U.shape[1])
-            scaPriors = pm.Uniform("sca", lower=self.scaFitter.coeffs - 5, upper=self.scaFitter.coeffs + 5, shape=U.shape[1])
-            start = {'locPriors':self.locFitter.coeffs, 'scaPrior':self.scaFitter.coeffs}
-            loc = pm.math.dot(U, locPriors)
-            sca = pm.math.dot(U, scaPriors)
-            HyperbolicSecant("target", mu=loc, s=sca, observed=Y)
-            self.trace = pm.sample(draws=draws, tune=tune, start=start, live_plot=False, step=pm.NUTS(target_accept=target_accept))
-            self.locCoeffs = self.trace['loc'].mean(axis=0)
-            self.scaCoeffs = self.trace['sca'].mean(axis=0)
+        # Original comment: Fit the mean and standard deviation using a MCMC method.
+        # New comment: We comment this out until we can do this step without relying on pymc3.
+        # with self.pymc3model:
+        #     U = np.concatenate([X, np.ones((X.shape[0],1))], axis=1)
+        #     locPriors = pm.Uniform("loc", lower=self.locFitter.coeffs - 5, upper=self.locFitter.coeffs + 5, shape=U.shape[1])
+        #     scaPriors = pm.Uniform("sca", lower=self.scaFitter.coeffs - 5, upper=self.scaFitter.coeffs + 5, shape=U.shape[1])
+        #     start = {'locPriors':self.locFitter.coeffs, 'scaPrior':self.scaFitter.coeffs}
+        #     loc = pm.math.dot(U, locPriors)
+        #     sca = pm.math.dot(U, scaPriors)
+        #     HyperbolicSecant("target", mu=loc, s=sca, observed=Y)
+        #     self.trace = pm.sample(draws=draws, tune=tune, start=start, live_plot=False, step=pm.NUTS(target_accept=target_accept))
+        #     self.locCoeffs = self.trace['loc'].mean(axis=0)
+        #     self.scaCoeffs = self.trace['sca'].mean(axis=0)
+
+        # New comment: To be declared.
+        self.locCoeffs = None
+        self.scaCoeffs = None
     
     def predict(self, x, y, quantiles=None):
         # Preprocess the input: check, scale, take finite, remove outliers
